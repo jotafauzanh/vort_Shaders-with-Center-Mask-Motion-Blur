@@ -1,6 +1,6 @@
 # vort Shader with Center Mask Motion Blur
 
-DISCLAIMER: Most of the code is made using AI, because I don't know how to code graphics
+DISCLAIMER: Most of my changes is made using AI, because I don't know how to code graphics
 
 original github repo: https://github.com/vortigern11/vort_Shaders
 
