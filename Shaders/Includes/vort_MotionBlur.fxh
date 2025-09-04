@@ -228,17 +228,8 @@ bool IsInsideNoBlurCircle(float2 uv, float percentage)
     return length(delta) < radius;
 }
 
-float GetCenterMaskRollOff(float2 uv, float innerPct, float outerPct, float vertPct)
+float GetCenterMaskRollOff(float r_inner, float r_outer, float dist)
 {
-    float centerY = lerp(0.0, 1.0, vertPct / 100.0);
-    float2 center = float2(0.5, centerY);
-    float2 delta = uv - center;
-    float2 norm_delta = delta * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-    float dist = length(norm_delta) / min(BUFFER_WIDTH, BUFFER_HEIGHT);
-
-    float r_inner = sqrt(innerPct / 100.0) * 0.5;
-    float r_outer = sqrt(outerPct / 100.0) * 0.5;
-
     if (dist <= r_inner) return 0.0;
     if (dist >= r_outer) return 1.0;
     return saturate((dist - r_inner) / max(1e-6, r_outer - r_inner));
@@ -250,18 +241,18 @@ float GetCenterMaskRollOff(float2 uv, float innerPct, float outerPct, float vert
 
 void PS_Blur(PS_ARGS4)
 {
+    float centerY = lerp(0.0, 1.0, UI_MB_CenterMask_Vert / 100.0);
+    float2 center = float2(0.5, centerY);
+    float2 delta = i.uv - center;
+    float2 norm_delta = delta * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+    float dist = length(norm_delta) / min(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+    float r_inner = sqrt(UI_MB_CenterMask_Inner / 100.0) * 0.5;
+    float r_outer = sqrt(UI_MB_CenterMask_Outer / 100.0) * 0.5;
+
     // Visualization logic
     if (UI_MB_ShowMaskVis)
     {
-        float centerY = lerp(0.0, 1.0, UI_MB_CenterMask_Vert / 100.0);
-        float2 center = float2(0.5, centerY);
-        float2 delta = i.uv - center;
-        float2 norm_delta = delta * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-        float dist = length(norm_delta) / min(BUFFER_WIDTH, BUFFER_HEIGHT);
-
-        float r_inner = sqrt(UI_MB_CenterMask_Inner / 100.0) * 0.5;
-        float r_outer = sqrt(UI_MB_CenterMask_Outer / 100.0) * 0.5;
-
         float3 vis_color = float3(0, 0, 0);
         float vis_alpha = 0.0;
 
@@ -286,7 +277,7 @@ void PS_Blur(PS_ARGS4)
         }
     }
 
-    float rolloff = GetCenterMaskRollOff(i.uv, UI_MB_CenterMask_Inner, UI_MB_CenterMask_Outer, UI_MB_CenterMask_Vert);
+    float rolloff = GetCenterMaskRollOff(r_inner, r_outer, dist);
 
     // use prev frame as current one
     // 1 = prev, 2 = next
