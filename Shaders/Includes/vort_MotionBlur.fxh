@@ -217,14 +217,78 @@ float4 CalcInfo(float2 uv, sampler mot_samp)
     return float4(mot_len, depth, norm_mot);
 }
 
+// Helper function to check if pixel is inside the no-blur circle
+bool IsInsideNoBlurCircle(float2 uv, float percentage)
+{
+    float2 center = float2(0.5, 0.5);
+    float2 delta = uv - center;
+
+    // Calculate radius from percentage (percentage is area, so radius = sqrt(percentage/100))
+    float radius = sqrt(percentage / 100.0) * 0.5; // 0.5 is half screen
+    return length(delta) < radius;
+}
+
+float GetCenterMaskRollOff(float2 uv, float innerPct, float outerPct, float vertPct)
+{
+    float centerY = lerp(0.0, 1.0, vertPct / 100.0);
+    float2 center = float2(0.5, centerY);
+    float2 delta = uv - center;
+    float2 norm_delta = delta * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+    float dist = length(norm_delta) / min(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+    float r_inner = sqrt(innerPct / 100.0) * 0.5;
+    float r_outer = sqrt(outerPct / 100.0) * 0.5;
+
+    if (dist <= r_inner) return 0.0;
+    if (dist >= r_outer) return 1.0;
+    return saturate((dist - r_inner) / max(1e-6, r_outer - r_inner));
+}
+
 /*******************************************************************************
     Shaders
 *******************************************************************************/
 
 void PS_Blur(PS_ARGS4)
 {
-    // use prev frame as current one
+    // Visualization logic
+    if (UI_MB_ShowMaskVis)
+    {
+        float centerY = lerp(0.0, 1.0, UI_MB_CenterMask_Vert / 100.0);
+        float2 center = float2(0.5, centerY);
+        float2 delta = i.uv - center;
+        float2 norm_delta = delta * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+        float dist = length(norm_delta) / min(BUFFER_WIDTH, BUFFER_HEIGHT);
 
+        float r_inner = sqrt(UI_MB_CenterMask_Inner / 100.0) * 0.5;
+        float r_outer = sqrt(UI_MB_CenterMask_Outer / 100.0) * 0.5;
+
+        float3 vis_color = float3(0, 0, 0);
+        float vis_alpha = 0.0;
+
+        if (dist < 0.005) {
+            vis_color = float3(1, 0, 0); // Red dot
+            vis_alpha = 1.0;
+        }
+        else if (abs(dist - r_inner) < 0.003) {
+            vis_color = float3(0, 0.5, 1); // Blue circle
+            vis_alpha = 1.0;
+        }
+        else if (abs(dist - r_outer) < 0.003) {
+            vis_color = float3(1, 1, 0); // Yellow circle
+            vis_alpha = 1.0;
+        }
+
+        // Blend visualization on top of the frame
+        if (vis_alpha > 0.0) {
+            float3 frame_color = OutColor(InColor(i.uv));
+            o = float4(lerp(frame_color, vis_color, vis_alpha), 1.0);
+            return;
+        }
+    }
+
+    float rolloff = GetCenterMaskRollOff(i.uv, UI_MB_CenterMask_Inner, UI_MB_CenterMask_Outer, UI_MB_CenterMask_Vert);
+
+    // use prev frame as current one
     // 1 = prev, 2 = next
     // motion vectors are already scaled and in correct units and direction
 
@@ -369,7 +433,8 @@ void PS_Blur(PS_ARGS4)
     // instead of only center in order to prevent artifacts
     acc.rgb += saturate(1.0 - acc.w) * fill_col;
 
-    o = float4(OutColor(acc.rgb), 1.0);
+    float3 orig = OutColor(InColor(i.uv));
+    o = float4(lerp(orig, OutColor(acc.rgb), rolloff), 1.0);
 }
 
 void PS_TileDownHor(PS_ARGS2)
@@ -553,5 +618,4 @@ void PS_Draw(PS_ARGS3) { o = Sample(sBlurTex, i.uv).rgb; }
     pass { VertexShader = PostProcessVS; PixelShader = MotBlur::PS_PrevFeat; RenderTarget0 = MotBlur::PrevCTex; RenderTarget1 = MotBlur::PrevZTex; } \
     pass { VertexShader = PostProcessVS; PixelShader = MotBlur::PS_PrevMV; RenderTarget0 = MotBlur::PrevMVTex; RenderTarget1 = MotBlur::PrevMaxTex; RenderTarget2 = MotBlur::NextMVTex; RenderTarget3 = MotBlur::NextMaxTex; } \
     pass { VertexShader = PostProcessVS; PixelShader = MotBlur::PS_Draw; }
-
 } // namespace end

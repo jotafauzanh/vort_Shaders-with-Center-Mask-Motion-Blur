@@ -68,6 +68,26 @@
         "(simulate faster shutter speed of a camera).",
         0, 1, 1
     )
+    UI_FLOAT(
+        CAT_MB, UI_MB_CenterMask_Inner, "Center Mask Inner (%)",
+        "Percentage of the screen (circle from center) where motion blur is NOT applied at all.",
+        0.0, 100.0, 10.0
+    )
+    UI_FLOAT(
+        CAT_MB, UI_MB_CenterMask_Outer, "Center Mask Outer (%)",
+        "Percentage of the screen (circle from center) where motion blur rolls off to full strength.",
+        0.0, 100.0, 60.0
+    )
+    UI_FLOAT(
+        CAT_MB, UI_MB_CenterMask_Vert, "Center Mask Vertical (%)",
+        "Vertical position of the mask center (0 = top, 100 = bottom, 50 = center).",
+        0.0, 100.0, 50.0
+    )
+    UI_BOOL(
+        CAT_MB, UI_MB_ShowMaskVis, "Show Mask Visualization",
+        "Draws a red dot for the center, blue circle for inner, yellow circle for outer.",
+        false
+    )
 
     #if USE_HQ_MB
         UI_TIP(CAT_MB, _vort_Blur_MV_Discard_,
