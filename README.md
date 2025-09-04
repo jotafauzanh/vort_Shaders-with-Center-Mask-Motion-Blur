@@ -2,7 +2,7 @@
 
 DISCLAIMER: Most of the code is made using AI, because I don't know how to code graphics
 
-original shader: https://github.com/vortigern11/vort_Shaders
+original github repo: https://github.com/vortigern11/vort_Shaders
 
 | Halo Reach | Halo Reach visualization |
 |---|---|
@@ -24,3 +24,5 @@ There's also visualization to finetune.
 Default settings mimick Halo Reach's setting.
 
 Currently it's only implemented on High Quality Motion Blur setting.
+
+To use, refer to original github repo: https://github.com/vortigern11/vort_Shaders
