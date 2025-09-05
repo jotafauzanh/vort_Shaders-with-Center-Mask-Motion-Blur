@@ -29,6 +29,8 @@ There's also circle visualization to help finetune settings. Default settings mi
 # Video Showcase:
 [![youtube video showcase](https://img.youtube.com/vi/xWWfboPWnkI/0.jpg)](https://www.youtube.com/watch?v=xWWfboPWnkI)
 
+https://github.com/user-attachments/assets/39e52739-7f86-4251-85ff-876752a3f0f1
+
 The video is ~120fps gameplay captured in 60fps, so the motion blur quality looks a bit worse than how it should.
 
 # How to use
